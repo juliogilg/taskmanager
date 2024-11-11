@@ -1,40 +1,68 @@
 package com.taskmanager.taskmanagementsystem.controller;
 
-import com.taskmanager.security.JwtTokenProvider;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.web.bind.annotation.*;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-@SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/auth")
+
 public class AuthController {
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
+    private final String jwtSecret = "your_secret_key_for_jwt"; // Clave secreta para el token
+    private final long jwtExpirationMs = 86400000; // Duración del token en milisegundos (24 horas)
 
-    @Autowired
-    private JwtTokenProvider tokenProvider;
-
-    /**
-     * Endpoint para el inicio de sesión.
-     * Recibe el nombre de usuario y la contraseña, y devuelve un token JWT si la autenticación es exitosa.
-     *
-     * @param username El nombre de usuario del usuario que quiere autenticarse.
-     * @param password La contraseña del usuario.
-     * @return Un token JWT que el cliente debe usar para autenticar las solicitudes futuras.
-     */
     @PostMapping("/login")
-    public String authenticateUser(@RequestParam String username, @RequestParam String password) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(username, password)
-        );
+    public Map<String, String> login(@RequestBody UserLoginRequest loginRequest) {
+        Map<String, String> response = new HashMap<>();
 
-        User user = (User) authentication.getPrincipal();
+        if (isValidUser(loginRequest)) {
+            String token = Jwts.builder()
+                    .setSubject(loginRequest.getUsername())
+                    .setIssuedAt(new Date())
+                    .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
+                    .signWith(SignatureAlgorithm.HS512, jwtSecret.getBytes())
+                    .compact();
 
-        return tokenProvider.generateToken(user.getUsername());
+            response.put("token", token);
+            response.put("status", "success");
+        } else {
+            response.put("status", "error");
+            response.put("message", "Invalid credentials");
+        }
+
+        return response;
+    }
+
+    private boolean isValidUser(UserLoginRequest loginRequest) {
+        return "usuario".equals(loginRequest.getUsername()) && "contraseña".equals(loginRequest.getPassword());
+    }
+
+    static class UserLoginRequest {
+        private String username;
+        private String password;
+
+        public String getUsername() {
+            return username;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public void setPassword(String password) {
+            this.password = password;
+        }
     }
 }

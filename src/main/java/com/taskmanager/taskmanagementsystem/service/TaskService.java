@@ -14,7 +14,7 @@ public class TaskService {
     private TaskRepository taskRepository;
 
     // Obtener todas las tareas
-    public List<com.taskmanager.taskmanagementsystem.repository.Task> getAllTasks() {
+    public List<Task> getAllTasks() {
         return taskRepository.findAll();
     }
 

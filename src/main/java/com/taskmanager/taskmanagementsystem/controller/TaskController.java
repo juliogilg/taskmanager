@@ -16,7 +16,7 @@ public class TaskController {
 
     // Ruta para obtener todas las tareas (Método GET)
     @GetMapping
-    public List<com.taskmanager.taskmanagementsystem.repository.Task> getAllTasks() {
+    public List<Task> getAllTasks() {
         return taskService.getAllTasks();
     }
 
